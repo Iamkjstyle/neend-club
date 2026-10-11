@@ -1,0 +1,601 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Aj-Kaju Neend Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@500;700;800&display=swap">
+<style>
+/* Layout concept: one sticker-book page. A hero with bouncing letters, a day picker, two chunky sticker cards (Aj and Kaju) with tick buttons and a chips-packet tally, then a weekly grid and the chips ledger. Candy colours by day, a starry indigo night by dark mode. */
+:root {
+  --display: 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
+  --body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --bg: #d8f0ff;
+  --bg-grad: linear-gradient(180deg, #c9ebff 0%, #e6f6ff 45%, #ffeaf5 100%);
+  --card: #ffffff;
+  --panel: #f5f0ff;
+  --ink: #2b2350;
+  --muted: #655e8c;
+  --line: #e4d9fb;
+  --pink: #ff6fae;
+  --pink-soft: #ffdcec;
+  --grape: #8a6bff;
+  --grape-soft: #e7e0ff;
+  --sun: #ffc93c;
+  --sun-soft: #fff1c1;
+  --mint: #3ddbb0;
+  --mint-soft: #d3f8ec;
+  --late: #ff7a59;
+  --late-soft: #ffe0d6;
+  --cloud: rgba(255, 255, 255, .9);
+  --on-solid: #26204a;
+  --focus: #5b3df5;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16143a;
+    --bg-grad: linear-gradient(180deg, #12103a 0%, #221b55 60%, #3a2060 100%);
+    --card: #26235c;
+    --panel: #2f2b6c;
+    --ink: #f5f1ff;
+    --muted: #bab2de;
+    --line: #3d3989;
+    --pink: #ff7eb6;
+    --pink-soft: #55285f;
+    --grape: #a994ff;
+    --grape-soft: #3b3585;
+    --sun: #ffd24d;
+    --sun-soft: #4d4222;
+    --mint: #47e0b5;
+    --mint-soft: #1f4d50;
+    --late: #ff8a6b;
+    --late-soft: #5a3040;
+    --cloud: rgba(255, 255, 255, .09);
+    --focus: #ffd24d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16143a;
+  --bg-grad: linear-gradient(180deg, #12103a 0%, #221b55 60%, #3a2060 100%);
+  --card: #26235c;
+  --panel: #2f2b6c;
+  --ink: #f5f1ff;
+  --muted: #bab2de;
+  --line: #3d3989;
+  --pink: #ff7eb6;
+  --pink-soft: #55285f;
+  --grape: #a994ff;
+  --grape-soft: #3b3585;
+  --sun: #ffd24d;
+  --sun-soft: #4d4222;
+  --mint: #47e0b5;
+  --mint-soft: #1f4d50;
+  --late: #ff8a6b;
+  --late-soft: #5a3040;
+  --cloud: rgba(255, 255, 255, .09);
+  --focus: #ffd24d;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  background-image: var(--bg-grad);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-inline: 16px;
+  padding-block: 12px 40px;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 12px; }
+h1, h2, h3, p { margin: 0; }
+h2 { font-family: var(--display); font-weight: 800; font-size: 1.5rem; line-height: 1.15; text-wrap: balance; }
+
+/* sky decoration */
+.sky { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.cloud { position: absolute; left: -240px; width: 150px; height: 46px; background: var(--cloud); border-radius: 999px; animation: drift 70s linear infinite; }
+.cloud::before, .cloud::after { content: ""; position: absolute; background: var(--cloud); border-radius: 50%; }
+.cloud::before { width: 62px; height: 62px; left: 22px; top: -30px; }
+.cloud::after { width: 82px; height: 82px; left: 64px; top: -42px; }
+.c1 { top: 9%; animation-duration: 80s; }
+.c2 { top: 36%; transform: scale(.7); animation-duration: 110s; animation-delay: -40s; }
+.c3 { top: 72%; transform: scale(1.1); animation-duration: 95s; animation-delay: -15s; }
+@keyframes drift { to { translate: calc(100vw + 480px) 0; } }
+.star { position: absolute; font-size: 18px; animation: twinkle 3s ease-in-out infinite; }
+@keyframes twinkle { 0%, 100% { opacity: .2; scale: .8; } 50% { opacity: .95; scale: 1.15; } }
+.balloon { position: absolute; font-size: 34px; animation: bob 7s ease-in-out infinite; }
+@keyframes bob { 0%, 100% { translate: 0 0; rotate: -6deg; } 50% { translate: 0 -26px; rotate: 6deg; } }
+
+.wrap { position: relative; z-index: 1; max-width: 920px; margin-inline: auto; display: flex; flex-direction: column; gap: 22px; }
+
+/* hero */
+.hero { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 16px; }
+.sync { font-size: .8rem; font-weight: 700; background: var(--card); border: 2px solid var(--line); border-radius: 999px; padding: 4px 12px; color: var(--muted); }
+.title { font-family: var(--display); font-weight: 800; font-size: clamp(2.6rem, 11vw, 4.6rem); line-height: 1; letter-spacing: .01em; }
+.title span { display: inline-block; animation: hop 2.6s ease-in-out infinite; animation-delay: calc(var(--i) * .13s); color: var(--c); }
+.title .sp { width: .3em; }
+@keyframes hop { 0%, 60%, 100% { translate: 0 0; } 30% { translate: 0 -.16em; rotate: -4deg; } }
+.names { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.name-pill { background: var(--card); border: 3px solid var(--line); border-radius: 999px; padding: 6px 16px; font-weight: 800; box-shadow: 0 4px 0 var(--line); font-size: .95rem; }
+.name-pill.aj { border-color: var(--pink-soft); box-shadow: 0 4px 0 var(--pink-soft); }
+.name-pill.kj { border-color: var(--grape-soft); box-shadow: 0 4px 0 var(--grape-soft); }
+.sweet { font-weight: 700; color: var(--muted); max-width: 34ch; text-wrap: balance; }
+.rules { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.rule { background: var(--sun-soft); border-radius: 999px; padding: 4px 12px; font-size: .85rem; font-weight: 800; }
+
+/* clock */
+.now { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 18px; background: var(--card); border: 3px solid var(--line); border-radius: 26px; padding: 12px 18px; box-shadow: 0 6px 0 var(--line); }
+.clock { font-family: var(--display); font-weight: 800; font-size: 1.8rem; font-variant-numeric: tabular-nums; }
+.nudge { font-weight: 800; min-width: 0; text-wrap: balance; text-align: center; }
+
+/* day picker */
+.daybar { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.daybar .label { text-align: center; min-width: 9ch; }
+.daybar .label b { display: block; font-family: var(--display); font-size: 1.5rem; line-height: 1.1; }
+.daybar .label small { color: var(--muted); font-weight: 700; }
+.round { width: 46px; height: 46px; border-radius: 50%; border: 3px solid var(--line); background: var(--card); box-shadow: 0 4px 0 var(--line); font-size: 1.2rem; font-weight: 800; transition: translate .12s, box-shadow .12s; }
+.round:hover:not(:disabled) { translate: 0 -2px; }
+.round:active:not(:disabled) { translate: 0 3px; box-shadow: 0 1px 0 var(--line); }
+.round:disabled { opacity: .35; cursor: not-allowed; }
+.todaybtn { border: 3px solid var(--line); background: var(--card); border-radius: 999px; padding: 6px 14px; font-weight: 800; box-shadow: 0 4px 0 var(--line); }
+
+.perfect { background: var(--mint-soft); border: 3px dashed var(--mint); border-radius: 22px; padding: 12px 16px; text-align: center; font-family: var(--display); font-weight: 800; font-size: 1.25rem; animation: pop-in .5s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes pop-in { from { scale: .8; opacity: 0; } }
+
+/* cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 20px; }
+.card { min-width: 0; background: var(--card); border: 3px solid var(--accent-soft); border-radius: 32px; box-shadow: 0 8px 0 var(--accent-soft); padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.who { display: flex; align-items: center; gap: 12px; }
+.avatar { flex: none; width: 66px; height: 66px; border-radius: 50%; background: var(--accent-soft); display: grid; place-items: center; font-size: 2.3rem; animation: wiggle 3.4s ease-in-out infinite; }
+@keyframes wiggle { 0%, 70%, 100% { rotate: 0deg; } 78% { rotate: -10deg; } 86% { rotate: 10deg; } 94% { rotate: -6deg; } }
+.who h2 { color: var(--accent); }
+.who .grow { flex: 1; min-width: 0; }
+.sub { color: var(--muted); font-size: .85rem; font-weight: 700; overflow-wrap: anywhere; }
+.streak { flex: none; background: var(--sun-soft); border-radius: 999px; padding: 4px 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.slot { background: var(--panel); border-radius: 22px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.slot-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.slot-q { flex: 1; min-width: 12ch; font-weight: 800; }
+.goal { background: var(--card); border: 2px solid var(--line); border-radius: 999px; padding: 1px 10px; font-size: .8rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.opt { font-family: var(--display); font-weight: 800; font-size: 1.05rem; padding: 10px 8px; border-radius: 999px; border: 3px solid var(--line); background: var(--card); box-shadow: 0 4px 0 var(--line); transition: translate .12s, box-shadow .12s, background .15s; min-width: 0; }
+.opt:hover { translate: 0 -2px; }
+.opt:active { translate: 0 3px; box-shadow: 0 1px 0 var(--line); }
+.opt.ok[aria-pressed="true"] { background: var(--mint); border-color: var(--mint); color: var(--on-solid); box-shadow: 0 4px 0 rgba(0, 0, 0, .18); animation: boing .45s cubic-bezier(.3, 1.8, .5, 1); }
+.opt.late[aria-pressed="true"] { background: var(--late); border-color: var(--late); color: var(--on-solid); box-shadow: 0 4px 0 rgba(0, 0, 0, .18); animation: shake .4s; }
+@keyframes boing { from { scale: .88; } }
+@keyframes shake { 25% { rotate: -3deg; } 50% { rotate: 3deg; } 75% { rotate: -2deg; } }
+
+.chips { background: var(--sun-soft); border: 3px dashed var(--sun); border-radius: 24px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.chips-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; justify-content: space-between; }
+.chips-head h3 { font-family: var(--display); font-weight: 800; font-size: 1.15rem; }
+.owed { font-weight: 800; font-variant-numeric: tabular-nums; }
+.owed b { font-family: var(--display); font-size: 1.9rem; line-height: 1; }
+.bags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-height: 40px; }
+.bag { animation: bag-wobble 2.4s ease-in-out infinite; animation-delay: calc(var(--i) * .15s); transform-origin: 50% 100%; }
+@keyframes bag-wobble { 0%, 100% { rotate: -5deg; } 50% { rotate: 5deg; } }
+.more { font-family: var(--display); font-weight: 800; font-size: 1.2rem; }
+.safe { font-weight: 800; }
+.settle { font-family: var(--display); font-weight: 800; font-size: 1.05rem; padding: 10px 14px; border-radius: 999px; border: 0; background: var(--pink); color: var(--on-solid); box-shadow: 0 4px 0 rgba(0, 0, 0, .2); transition: translate .12s, box-shadow .12s; }
+.settle:hover:not(:disabled) { translate: 0 -2px; }
+.settle:active:not(:disabled) { translate: 0 3px; box-shadow: 0 1px 0 rgba(0, 0, 0, .2); }
+.settle:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+.settle.armed { background: var(--sun); animation: pulse .8s ease-in-out infinite; }
+@keyframes pulse { 50% { scale: 1.04; } }
+.tiny { font-size: .82rem; font-weight: 700; color: var(--muted); }
+
+/* sections */
+.panel { background: var(--card); border: 3px solid var(--line); border-radius: 30px; box-shadow: 0 8px 0 var(--line); padding: 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.scroll { overflow-x: auto; }
+table { border-collapse: separate; border-spacing: 0 6px; width: 100%; text-align: center; font-weight: 800; }
+th { font-family: var(--display); font-size: .95rem; padding: 2px 4px; }
+th.left, td.left { text-align: left; }
+td { padding: 6px 4px; background: var(--panel); font-size: 1.15rem; }
+td:first-child { border-radius: 14px 0 0 14px; padding-left: 8px; }
+td:last-child { border-radius: 0 14px 14px 0; }
+tr.sel td { background: var(--sun-soft); }
+.daylink { background: none; border: 0; padding: 4px 6px; font-weight: 800; font-size: .9rem; text-align: left; text-decoration: underline dotted; text-underline-offset: 3px; }
+.totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.tile { background: var(--panel); border-radius: 20px; padding: 12px 14px; display: flex; flex-direction: column; }
+.tile b { font-family: var(--display); font-size: 2rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tile span { font-weight: 800; color: var(--muted); font-size: .9rem; }
+.ledger { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ledger li { background: var(--panel); border-radius: 16px; padding: 8px 12px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; font-weight: 700; }
+.ledger time { color: var(--muted); font-size: .85rem; }
+.empty { text-align: center; color: var(--muted); font-weight: 700; padding: 8px; text-wrap: balance; }
+footer { text-align: center; font-weight: 800; color: var(--muted); padding-block: 4px; }
+
+#toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); translate: -50% 30px; opacity: 0; transition: .25s; background: var(--ink); color: var(--bg); border-radius: 999px; padding: 10px 18px; font-weight: 800; max-width: calc(100vw - 32px); text-align: center; z-index: 60; pointer-events: none; }
+#toast.show { translate: -50% 0; opacity: 1; }
+.pop { position: fixed; pointer-events: none; z-index: 55; font-size: 22px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<div class="sky" aria-hidden="true">
+  <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
+  <span class="star" style="left:8%;top:14%;animation-delay:0s">✨</span>
+  <span class="star" style="left:26%;top:6%;animation-delay:.8s">⭐</span>
+  <span class="star" style="left:64%;top:10%;animation-delay:1.6s">✨</span>
+  <span class="star" style="left:88%;top:22%;animation-delay:.4s">⭐</span>
+  <span class="star" style="left:4%;top:52%;animation-delay:2s">✨</span>
+  <span class="star" style="left:93%;top:58%;animation-delay:1.2s">✨</span>
+  <span class="star" style="left:14%;top:84%;animation-delay:2.4s">⭐</span>
+  <span class="star" style="left:80%;top:88%;animation-delay:.6s">✨</span>
+  <span class="balloon" style="left:2%;top:62%">🎈</span>
+  <span class="balloon" style="right:2%;top:36%;animation-delay:-3s">🎈</span>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="bag" viewBox="0 0 38 52">
+    <path d="M3 7 l4 -4 l4 4 l4 -4 l4 4 l4 -4 l4 4 l4 -4 l4 4 v38 l-4 4 l-4 -4 l-4 4 l-4 -4 l-4 4 l-4 -4 l-4 4 l-4 -4 z" style="fill:var(--sun);stroke:var(--pink);stroke-width:2;stroke-linejoin:round"/>
+    <ellipse cx="19" cy="26" rx="13" ry="9" style="fill:var(--card)"/>
+    <text x="19" y="29" text-anchor="middle" font-size="7.5" font-weight="800" font-family="Baloo 2, sans-serif" style="fill:var(--ink)">CHIPS</text>
+  </symbol>
+</svg>
+
+<main class="wrap">
+  <header class="hero">
+    <span class="sync" id="sync">☁️ Connect ho raha hai…</span>
+    <h1 class="title" id="title" aria-label="Neend Club">Neend Club</h1>
+    <div class="names">
+      <span class="name-pill aj">🐰 Aastha Jaiswal · Aj · Pisitii 🎀</span>
+      <span class="name-pill kj">🐻 Kishan Jaiswal · KJ · Kaju 🥜</span>
+    </div>
+    <p class="sweet" id="sweet"></p>
+    <div class="rules">
+      <span class="rule">🌙 Dono: 11:30 PM tak so jao</span>
+      <span class="rule">⏰ Kaju: 6:30 AM</span>
+      <span class="rule">⏰ Aj: 7:30 AM</span>
+      <span class="rule">🙈 1 late = 1 packet chips 🥔</span>
+    </div>
+  </header>
+
+  <section class="now" aria-label="Abhi ka time">
+    <span class="clock" id="clock">--:--:--</span>
+    <span class="nudge" id="nudge"></span>
+  </section>
+
+  <section class="daybar" aria-label="Din chuno" id="daybar"></section>
+  <div id="perfect"></div>
+  <section class="cards" id="cards" aria-label="Aj aur Kaju ki entry"></section>
+
+  <section class="panel" aria-labelledby="week-h">
+    <h2 id="week-h">Is hafte ka report 📅</h2>
+    <div class="scroll" id="week"></div>
+    <p class="tiny">Kisi din par tap karo, wahi din upar khul jayega. 🙈 = late, ✅ = time par, · = abhi tick nahi hua.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="ledger-h">
+    <h2 id="ledger-h">Chips ka hisaab 🥔📒</h2>
+    <div id="ledger"></div>
+  </section>
+
+  <footer>Kaju ne Aj ke liye banaya 💖 Ab time par soyo, Pisitii! 🌙</footer>
+</main>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var PEOPLE = {
+    a: { key: 'a', name: 'Aj', full: 'Aastha Jaiswal', alias: 'Pisitii', avatar: '🐰', badge: '🎀', accent: '--pink', soft: '--pink-soft', wake: '7:30 AM' },
+    k: { key: 'k', name: 'Kaju', full: 'Kishan Jaiswal', alias: 'KJ', avatar: '🐻', badge: '🥜', accent: '--grape', soft: '--grape-soft', wake: '6:30 AM' }
+  };
+  var ORDER = ['a', 'k'];
+  var LS_KEY = 'aj-kaju-neend-club-v1';
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var days = {};      // "YYYY-MM-DD_who" -> {date, who, sleep, wake}
+  var settles = [];   // [{id, who, count, date, at}]
+  var dbh = null;
+  var syncState = 'connecting';
+  var confirmWho = null;
+  var viewDate = dateKey(new Date());
+  var queues = {};
+
+  function $(s) { return document.querySelector(s); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function dateKey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function parseKey(k) { var p = String(k).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+  function addDays(k, n) { var d = parseKey(k); d.setDate(d.getDate() + n); return dateKey(d); }
+  function today() { return dateKey(new Date()); }
+  function nice(k) {
+    var t = today();
+    if (k === t) return 'Aaj';
+    if (k === addDays(t, -1)) return 'Kal';
+    return parseKey(k).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+  function longDate(k) { return parseKey(k).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' }); }
+
+  /* ---------- numbers ---------- */
+  function lateOf(w) {
+    var n = 0;
+    Object.keys(days).forEach(function (k) {
+      var r = days[k];
+      if (r && r.who === w) n += (r.sleep === 'late' ? 1 : 0) + (r.wake === 'late' ? 1 : 0);
+    });
+    return n;
+  }
+  function fedOf(w) {
+    return settles.reduce(function (n, s) { return s.who === w ? n + (Number(s.count) || 0) : n; }, 0);
+  }
+  function owedOf(w) { return Math.max(0, lateOf(w) - fedOf(w)); }
+  function dayOk(date, w) { var r = days[date + '_' + w]; return !!(r && r.sleep === 'ok' && r.wake === 'ok'); }
+  function streak(w) {
+    var d = today(), n = 0;
+    if (!dayOk(d, w)) d = addDays(d, -1);
+    while (dayOk(d, w) && n < 4000) { n++; d = addDays(d, -1); }
+    return n;
+  }
+
+  /* ---------- storage ---------- */
+  function lsLoad() {
+    try {
+      var r = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+      if (r) { days = r.days || {}; settles = r.settles || []; }
+    } catch (e) { /* storage blocked */ }
+  }
+  function lsSave() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ days: days, settles: settles })); } catch (e) { /* storage blocked */ }
+  }
+  function enqueue(key, fn) {
+    queues[key] = (queues[key] || Promise.resolve()).catch(function () {}).then(fn);
+    return queues[key];
+  }
+  function saveFail() { toast('Save nahi hua 😢 Thodi der baad dobara try karo'); }
+
+  function saveDay(date, who, patch) {
+    var key = date + '_' + who;
+    var cur = days[key] || { date: date, who: who, sleep: null, wake: null };
+    var next = {};
+    Object.keys(cur).forEach(function (k) { next[k] = cur[k]; });
+    Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
+    days[key] = next;
+    if (dbh) {
+      render();
+      enqueue(key, function () { return dbh.doc('days/' + key).set(next); }).catch(saveFail);
+    } else {
+      lsSave();
+      render();
+    }
+  }
+
+  function settle(w, btn) {
+    var owed = owedOf(w);
+    if (!owed) return;
+    burst(btn, ['🥔', '🎉', '💖', '⭐']);
+    var rec = { who: w, count: owed, date: today(), at: new Date().toISOString() };
+    confirmWho = null;
+    if (dbh) {
+      var ref = dbh.collection('settlements').doc();
+      settles = [Object.assign({ id: ref.id }, rec)].concat(settles);
+      render();
+      enqueue('settle:' + ref.id, function () { return ref.set(rec); }).catch(saveFail);
+    } else {
+      settles = [Object.assign({ id: 'l' + Date.now() }, rec)].concat(settles);
+      lsSave();
+      render();
+    }
+    toast(PEOPLE[w].name + ' ne ' + owed + ' packet chips khila diye! Hisaab saaf 🎉🥔');
+  }
+
+  /* ---------- actions ---------- */
+  function mark(w, slot, val, btn) {
+    var cur = (days[viewDate + '_' + w] || {})[slot] || null;
+    var next = cur === val ? null : val;
+    if (next === 'ok') burst(btn, ['⭐', '💖', '🎈', '✨']);
+    if (next === 'late') toast(PEOPLE[w].name + ' ka +1 packet chips udhaar 🥔😜');
+    var patch = {}; patch[slot] = next;
+    saveDay(viewDate, w, patch);
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-act]');
+    if (!t || t.disabled) return;
+    var act = t.getAttribute('data-act');
+    var w = t.getAttribute('data-who');
+    if (act === 'mark') mark(w, t.getAttribute('data-slot'), t.getAttribute('data-val'), t);
+    else if (act === 'settle') {
+      if (confirmWho === w) { settle(w, t); }
+      else {
+        confirmWho = w; render();
+        setTimeout(function () { if (confirmWho === w) { confirmWho = null; render(); } }, 4000);
+      }
+    }
+    else if (act === 'prev') { viewDate = addDays(viewDate, -1); render(); }
+    else if (act === 'next') { if (viewDate < today()) { viewDate = addDays(viewDate, 1); render(); } }
+    else if (act === 'today') { viewDate = today(); render(); }
+    else if (act === 'pick') { viewDate = t.getAttribute('data-date'); render(); window.scrollTo({ top: $('#daybar').offsetTop - 12, behavior: reduce ? 'auto' : 'smooth' }); }
+  });
+
+  /* ---------- fun ---------- */
+  var toastTimer;
+  function toast(m) {
+    var el = $('#toast');
+    el.textContent = m;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('show'); }, 2800);
+  }
+  function burst(el, list) {
+    if (reduce || !el || !el.getBoundingClientRect) return;
+    var r = el.getBoundingClientRect();
+    var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    for (var i = 0; i < 14; i++) {
+      (function (i) {
+        var s = document.createElement('span');
+        s.className = 'pop';
+        s.textContent = list[i % list.length];
+        s.style.left = cx + 'px';
+        s.style.top = cy + 'px';
+        document.body.appendChild(s);
+        var dx = (Math.random() - 0.5) * 240, dy = -(70 + Math.random() * 150);
+        var a = s.animate([
+          { transform: 'translate(-50%,-50%) scale(.4)', opacity: 1 },
+          { transform: 'translate(calc(-50% + ' + dx + 'px),calc(-50% + ' + dy + 'px)) scale(1.2) rotate(' + dx + 'deg)', opacity: 0 }
+        ], { duration: 900 + Math.random() * 500, easing: 'cubic-bezier(.2,.7,.3,1)' });
+        a.onfinish = function () { s.remove(); };
+      })(i);
+    }
+  }
+
+  var SWEET = [
+    'Pisitii, jaldi so jao, kal phir masti karenge 🌙💤',
+    'Kaju bhi time par uthega, promise 🥜⏰',
+    'Chips khilane se bachna hai to time par so jao 😜🥔',
+    'Aj + Kaju = sabse best neend squad 🐰🐻',
+    'Subah ki dhoop, chai aur on-time tick ☀️✅',
+    'Sapno me bhi hum saath 🌈✨',
+    'Aaj bhi perfect din banayenge, hai na? 💖'
+  ];
+
+  /* ---------- render ---------- */
+  function slotHTML(w, slot, icon, q, goal, val) {
+    return '<div class="slot"><div class="slot-top"><span aria-hidden="true">' + icon + '</span>' +
+      '<span class="slot-q">' + q + '</span><span class="goal">' + goal + '</span></div>' +
+      '<div class="pair">' +
+      '<button class="opt ok" data-act="mark" data-who="' + w + '" data-slot="' + slot + '" data-val="ok" aria-pressed="' + (val === 'ok') + '">Time par ✅</button>' +
+      '<button class="opt late" data-act="mark" data-who="' + w + '" data-slot="' + slot + '" data-val="late" aria-pressed="' + (val === 'late') + '">Late 🙈</button>' +
+      '</div></div>';
+  }
+
+  function cardHTML(w) {
+    var p = PEOPLE[w];
+    var rec = days[viewDate + '_' + w] || {};
+    var owed = owedOf(w), fed = fedOf(w), late = lateOf(w), st = streak(w);
+    var bags = '';
+    for (var i = 0; i < Math.min(owed, 10); i++) {
+      bags += '<svg class="bag" style="--i:' + i + '" width="30" height="41" viewBox="0 0 38 52" aria-hidden="true"><use href="#bag"/></svg>';
+    }
+    if (owed > 10) bags += '<span class="more">+' + (owed - 10) + '</span>';
+    if (!owed) bags = '<span class="safe">Koi udhaar nahi 😇✨</span>';
+    var armed = confirmWho === w;
+    return '<article class="card" style="--accent:var(' + p.accent + ');--accent-soft:var(' + p.soft + ')" aria-labelledby="n-' + w + '">' +
+      '<div class="who"><div class="avatar" aria-hidden="true">' + p.avatar + '</div>' +
+      '<div class="grow"><h2 id="n-' + w + '">' + p.name + ' ' + p.badge + '</h2><p class="sub">' + p.full + ' · ' + p.alias + '</p></div>' +
+      '<div class="streak" title="Lagataar perfect din">🔥 ' + st + '</div></div>' +
+      slotHTML(w, 'sleep', '🌙', 'Kal raat 11:30 PM tak soye?', '11:30 PM', rec.sleep) +
+      slotHTML(w, 'wake', '⏰', 'Aaj subah ' + p.wake + ' tak uthe?', p.wake, rec.wake) +
+      '<div class="chips"><div class="chips-head"><h3>Chips udhaar 🥔</h3>' +
+      '<span class="owed"><b>' + owed + '</b> packet baaki</span></div>' +
+      '<div class="bags">' + bags + '</div>' +
+      '<button class="settle' + (armed ? ' armed' : '') + '" data-act="settle" data-who="' + w + '"' + (owed ? '' : ' disabled') + '>' +
+      (armed ? 'Pakka khila diye? Haan ✅' : 'Chips khila diye 🎉') + '</button>' +
+      '<p class="tiny">Ab tak khilaye: ' + fed + ' packet · Late hue: ' + late + ' baar</p></div>' +
+      '</article>';
+  }
+
+  function icon(v) { return v === 'ok' ? '✅' : v === 'late' ? '🙈' : '·'; }
+
+  function weekHTML() {
+    var rows = '';
+    for (var i = 0; i < 7; i++) {
+      var d = addDays(today(), -i);
+      var cells = '';
+      ORDER.forEach(function (w) {
+        var r = days[d + '_' + w] || {};
+        cells += '<td>' + icon(r.sleep) + '</td><td>' + icon(r.wake) + '</td>';
+      });
+      rows += '<tr' + (d === viewDate ? ' class="sel"' : '') + '><td class="left"><button class="daylink" data-act="pick" data-date="' + d + '">' + nice(d) + '</button></td>' + cells + '</tr>';
+    }
+    return '<table><thead><tr><th class="left">Din</th><th colspan="2">Aj 🐰</th><th colspan="2">Kaju 🐻</th></tr>' +
+      '<tr><th class="left"></th><th>🌙</th><th>⏰</th><th>🌙</th><th>⏰</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  }
+
+  function ledgerHTML() {
+    var tiles = '<div class="totals">' + ORDER.map(function (w) {
+      return '<div class="tile"><b>' + fedOf(w) + '</b><span>' + PEOPLE[w].avatar + ' ' + PEOPLE[w].name + ' ne khilaye (packet)</span></div>';
+    }).join('') + '</div>';
+    var list = settles.filter(function (s) { return PEOPLE[s.who]; }).slice(0, 25);
+    var body = list.length
+      ? '<ul class="ledger">' + list.map(function (s) {
+          return '<li><span>🥔 ' + PEOPLE[s.who].name + ' ne ' + (Number(s.count) || 0) + ' packet chips khilaye</span><time>' + nice(s.date) + '</time></li>';
+        }).join('') + '</ul>'
+      : '<p class="empty">Abhi tak koi chips nahi khilaye 😇 Bahut badhiya! Aise hi time par soyo-uthho.</p>';
+    return tiles + body;
+  }
+
+  function render() {
+    var t = today();
+    var isToday = viewDate === t;
+    $('#daybar').innerHTML =
+      '<button class="round" data-act="prev" aria-label="Pichla din">◀</button>' +
+      '<div class="label"><b>' + nice(viewDate) + '</b><small>' + longDate(viewDate) + '</small></div>' +
+      '<button class="round" data-act="next" aria-label="Agla din"' + (viewDate >= t ? ' disabled' : '') + '>▶</button>' +
+      (isToday ? '' : '<button class="todaybtn" data-act="today">Aaj par jao</button>');
+    var perfect = ORDER.every(function (w) { return dayOk(viewDate, w); });
+    $('#perfect').innerHTML = perfect ? '<div class="perfect">Perfect din! 🎉 Aj aur Kaju dono time par, chips safe 🥔✨</div>' : '';
+    $('#cards').innerHTML = ORDER.map(cardHTML).join('');
+    $('#week').innerHTML = weekHTML();
+    $('#ledger').innerHTML = ledgerHTML();
+    var chip = $('#sync');
+    chip.textContent = syncState === 'shared' ? '☁️ Dono ka data sync ho raha hai'
+      : syncState === 'local' ? '📱 Sirf is device me save (sync off)' : '☁️ Connect ho raha hai…';
+  }
+
+  function tick() {
+    var n = new Date();
+    var h = n.getHours(), m = n.getMinutes();
+    var h12 = h % 12 || 12;
+    $('#clock').textContent = h12 + ':' + pad(m) + ':' + pad(n.getSeconds()) + ' ' + (h < 12 ? 'AM' : 'PM');
+    var mins = h * 60 + m, msg;
+    function span(x) { var hh = Math.floor(x / 60), mm = x % 60; return (hh ? hh + ' ghanta ' : '') + mm + ' min'; }
+    if (mins >= 1410 || mins < 360) msg = 'Neend ka time ho gaya 😴 Phone rakho aur so jao!';
+    else if (mins < 390) msg = 'Kaju ke uthne me ' + span(390 - mins) + ' ⏰🥜';
+    else if (mins < 450) msg = 'Kaju uth gaya? ✅ Ab Aj ke uthne me ' + span(450 - mins) + ' ☀️🐰';
+    else msg = 'Sone me ' + span(1410 - mins) + ' baaki 🌙';
+    $('#nudge').textContent = msg;
+  }
+
+  /* ---------- boot ---------- */
+  function buildTitle() {
+    var colors = ['--pink', '--grape', '--sun', '--mint', '--late'];
+    var out = '', idx = 0;
+    'Neend Club'.split('').forEach(function (ch) {
+      if (ch === ' ') { out += '<span class="sp" aria-hidden="true"></span>'; return; }
+      out += '<span aria-hidden="true" style="--i:' + idx + ';--c:var(' + colors[idx % colors.length] + ')">' + ch + '</span>';
+      idx++;
+    });
+    $('#title').innerHTML = out;
+  }
+
+  function fallbackLocal() {
+    dbh = null; syncState = 'local';
+    days = {}; settles = [];
+    lsLoad(); render();
+  }
+
+  async function boot() {
+    buildTitle();
+    var doy = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 864e5);
+    $('#sweet').textContent = SWEET[doy % SWEET.length];
+    render(); tick();
+    setInterval(tick, 1000);
+    var db = null;
+    try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { db = null; }
+    if (!db) { fallbackLocal(); return; }
+    dbh = db; syncState = 'shared'; render();
+    try {
+      db.collection('days').limit(1000).onSnapshot(function (s) {
+        days = {};
+        s.docs.forEach(function (d) { days[d.id] = d.data(); });
+        render();
+      }, fallbackLocal);
+      db.collection('settlements').orderBy('at', 'desc').limit(500).onSnapshot(function (s) {
+        settles = s.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+        render();
+      }, fallbackLocal);
+    } catch (e) { fallbackLocal(); }
+  }
+  boot();
+})();
+</script>
+
+</body></html>
