@@ -1,4 +1,11 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16143a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌙%3C/text%3E%3C/svg%3E">
 <title>Aj-Kaju Neend Club</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,6 +35,7 @@
   --cloud: rgba(255, 255, 255, .9);
   --on-solid: #26204a;
   --focus: #5b3df5;
+  color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -77,6 +85,8 @@
 }
 
 * { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
 body {
   background: var(--bg);
   background-image: var(--bg-grad);
@@ -216,6 +226,9 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 </style>
+</head>
+<body>
+
 
 <div class="sky" aria-hidden="true">
   <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
@@ -290,11 +303,20 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
   };
   var ORDER = ['a', 'k'];
   var LS_KEY = 'aj-kaju-neend-club-v1';
+  var FIREBASE_CONFIG = {
+    apiKey: "AIzaSyA2SQhev4koBlT8-tHLx7LwLMXvSTCYGOc",
+    authDomain: "analytics-band.firebaseapp.com",
+    projectId: "analytics-band",
+    storageBucket: "analytics-band.firebasestorage.app",
+    messagingSenderId: "307582345351",
+    appId: "1:307582345351:web:61af6c20994452ac74d822"
+  };
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var days = {};      // "YYYY-MM-DD_who" -> {date, who, sleep, wake}
   var settles = [];   // [{id, who, count, date, at}]
-  var dbh = null;
+  var fb = null;
+  var failed = false;
   var syncState = 'connecting';
   var confirmWho = null;
   var viewDate = dateKey(new Date());
@@ -358,9 +380,9 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
     Object.keys(cur).forEach(function (k) { next[k] = cur[k]; });
     Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
     days[key] = next;
-    if (dbh) {
+    if (fb) {
       render();
-      enqueue(key, function () { return dbh.doc('days/' + key).set(next); }).catch(saveFail);
+      enqueue(key, function () { return fb.setDay(key, next); }).catch(saveFail);
     } else {
       lsSave();
       render();
@@ -373,11 +395,11 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
     burst(btn, ['🥔', '🎉', '💖', '⭐']);
     var rec = { who: w, count: owed, date: today(), at: new Date().toISOString() };
     confirmWho = null;
-    if (dbh) {
-      var ref = dbh.collection('settlements').doc();
-      settles = [Object.assign({ id: ref.id }, rec)].concat(settles);
+    if (fb) {
+      var sid = fb.newId();
+      settles = [Object.assign({ id: sid }, rec)].concat(settles);
       render();
-      enqueue('settle:' + ref.id, function () { return ref.set(rec); }).catch(saveFail);
+      enqueue('settle:' + sid, function () { return fb.setSettle(sid, rec); }).catch(saveFail);
     } else {
       settles = [Object.assign({ id: 'l' + Date.now() }, rec)].concat(settles);
       lsSave();
@@ -537,6 +559,7 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
     $('#ledger').innerHTML = ledgerHTML();
     var chip = $('#sync');
     chip.textContent = syncState === 'shared' ? '☁️ Dono ka data sync ho raha hai'
+      : syncState === 'denied' ? '⚠️ Sync band hai (Firestore Rules publish karo)'
       : syncState === 'local' ? '📱 Sirf is device me save (sync off)' : '☁️ Connect ho raha hai…';
   }
 
@@ -566,10 +589,12 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
     $('#title').innerHTML = out;
   }
 
-  function fallbackLocal() {
-    dbh = null; syncState = 'local';
+  function fallbackLocal(err) {
+    failed = true; fb = null;
+    syncState = (err && err.code === 'permission-denied') ? 'denied' : 'local';
     days = {}; settles = [];
     lsLoad(); render();
+    if (syncState === 'denied') toast('Sync band hai: Firestore me Rules publish karo');
   }
 
   async function boot() {
@@ -578,24 +603,35 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
     $('#sweet').textContent = SWEET[doy % SWEET.length];
     render(); tick();
     setInterval(tick, 1000);
-    var db = null;
-    try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { db = null; }
-    if (!db) { fallbackLocal(); return; }
-    dbh = db; syncState = 'shared'; render();
     try {
-      db.collection('days').limit(1000).onSnapshot(function (s) {
+      var base = 'https://www.gstatic.com/firebasejs/10.12.2/';
+      var appMod = await import(base + 'firebase-app.js');
+      var fsMod = await import(base + 'firebase-firestore.js');
+      var app = appMod.initializeApp(FIREBASE_CONFIG);
+      var fs = fsMod.getFirestore(app);
+      fb = {
+        setDay: function (key, data) { return fsMod.setDoc(fsMod.doc(fs, 'days', key), data); },
+        newId: function () { return fsMod.doc(fsMod.collection(fs, 'settlements')).id; },
+        setSettle: function (id, rec) { return fsMod.setDoc(fsMod.doc(fs, 'settlements', id), rec); }
+      };
+      syncState = 'shared'; render();
+      fsMod.onSnapshot(fsMod.collection(fs, 'days'), function (snap) {
+        if (failed) return;
         days = {};
-        s.docs.forEach(function (d) { days[d.id] = d.data(); });
+        snap.forEach(function (d) { days[d.id] = d.data(); });
         render();
       }, fallbackLocal);
-      db.collection('settlements').orderBy('at', 'desc').limit(500).onSnapshot(function (s) {
-        settles = s.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+      fsMod.onSnapshot(fsMod.query(fsMod.collection(fs, 'settlements'), fsMod.orderBy('at', 'desc'), fsMod.limit(500)), function (snap) {
+        if (failed) return;
+        settles = [];
+        snap.forEach(function (d) { settles.push(Object.assign({ id: d.id }, d.data())); });
         render();
       }, fallbackLocal);
-    } catch (e) { fallbackLocal(); }
+    } catch (e) { fallbackLocal(e); }
   }
   boot();
 })();
 </script>
 
-</body></html>
+</body>
+</html>
