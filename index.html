@@ -240,6 +240,7 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
 .reason { margin: 0; font-weight: 700; font-size: .9rem; text-wrap: balance; overflow-wrap: anywhere; }
 .pinrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .pinrow input { flex: 1; min-width: 7ch; max-width: 14ch; font: inherit; font-weight: 700; padding: 6px 12px; border-radius: 999px; border: 2px solid var(--line); background: var(--panel); color: var(--ink); }
+.pinrow select { font: inherit; font-weight: 700; padding: 6px 10px; border-radius: 999px; border: 2px solid var(--line); background: var(--panel); color: var(--ink); }
 .linkbtn { font-weight: 800; font-size: .85rem; border: 0; background: none; text-decoration: underline; text-underline-offset: 3px; padding: 4px 6px; }
 .linkbtn.solid { text-decoration: none; background: var(--accent); color: var(--on-solid); border-radius: 999px; padding: 6px 14px; }
 </style>
@@ -510,7 +511,7 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
         setMsg(id, false, ((j && j.message) || 'Check fail ho gaya.') + (j && j.seen ? ' [AI ne padha: ' + j.seen + ']' : ''));
       }
     } catch (e) {
-      setMsg(id, false, 'Server tak nahi pahunch paaya. Internet check karke dobara try karo.');
+      setMsg(id, false, 'Server tak nahi pahunch paaya. Internet check karo. Agar internet theek hai to Cloudflare me ALLOWED_ORIGIN galat ho sakta hai.');
     }
     delete uploading[id];
     render();
@@ -526,6 +527,48 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
       upload(who, kind, f, t);
     }
   });
+
+  /* ---------- test panel (open the site with #test at the end of the link) ---------- */
+  async function runTest(file) {
+    var out = document.getElementById('t-out');
+    var who = document.getElementById('t-who').value, kind = document.getElementById('t-kind').value;
+    if (!file) return;
+    if (WORKER_URL.indexOf('http') !== 0) { out.textContent = '❌ WORKER_URL set nahi hai.'; return; }
+    var pin = getPin(who);
+    if (!pin) { out.textContent = '❌ Pehle upar ' + PEOPLE[who].name + ' ke card me PIN Save karo.'; return; }
+    out.textContent = '🔍 AI check kar raha hai…';
+    try {
+      var b64 = await compress(file);
+      var res = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ who: who, kind: kind, pin: pin, image: b64, mime: 'image/jpeg', test: true })
+      });
+      var j = await res.json();
+      if (j && j.code === 'bad_pin') setPin(who, '');
+      out.textContent = (j && j.ok ? '✅ ' : '❌ ') + ((j && j.message) || 'Koi jawab nahi aaya.') + (j && j.seen ? '  [AI ne padha: ' + j.seen + ']' : '');
+    } catch (e) {
+      out.textContent = '❌ Server tak nahi pahunch paaya (' + String(e && e.message).slice(0, 60) + '). Aksar Cloudflare me ALLOWED_ORIGIN galat hota hai.';
+    }
+  }
+  function initTestPanel() {
+    if (location.hash !== '#test') return;
+    var sec = document.createElement('section');
+    sec.className = 'panel'; sec.id = 'testbox';
+    sec.innerHTML = '<h2>🧪 Test upload</h2>' +
+      '<p class="tiny">Window ka rule nahi lagta aur asli data me kuch save nahi hota. WhatsApp me abhi good night ya good morning bhejo, turant (30 min ke andar) uska screenshot yahan daalo. "Today" wali line screenshot me honi chahiye.</p>' +
+      '<div class="pinrow"><label class="tiny" for="t-who">Kaun</label><select id="t-who"><option value="k">Kaju</option><option value="a">Aj</option></select>' +
+      '<label class="tiny" for="t-kind">Kaunsa</label><select id="t-kind"><option value="sleep">Good night</option><option value="wake">Good morning</option></select></div>' +
+      '<label class="proof">🧪 Test screenshot daalo<input type="file" id="t-file" accept="image/*"></label>' +
+      '<p class="reason" id="t-out" aria-live="polite"></p>';
+    var foot = document.querySelector('footer');
+    foot.parentNode.insertBefore(sec, foot);
+    document.getElementById('t-file').addEventListener('change', function (e) {
+      var f = e.target.files && e.target.files[0];
+      e.target.value = '';
+      runTest(f);
+    });
+  }
 
   /* ---------- chips settle ---------- */
   function settle(w, btn) {
@@ -567,12 +610,12 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
   });
 
   /* ---------- render ---------- */
-  function pillFor(st, chk, win) {
+  function pillFor(st, chk, win, startNote) {
     if (st === 'pass') return '<span class="pill pass">✅ Pass' + (chk && chk.msgTime ? ' · ' + esc(fmt12(+chk.msgTime.split(':')[0] * 60 + +chk.msgTime.split(':')[1])) : '') + '</span>';
     if (st === 'late') return '<span class="pill late">🙈 Late · +1 chips</span>';
     if (st === 'open') return '<span class="pill open">📸 Window khula hai</span>';
     if (st === 'pending') return '<span class="pill pending">⏳ Abhi band</span>';
-    return '<span class="pill skip">Tracking yahan se shuru nahi</span>';
+    return '<span class="pill skip">' + (startNote || 'Tracking yahan se shuru nahi') + '</span>';
   }
 
   function slotHTML(w, kind) {
@@ -589,7 +632,7 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
     var m = lastMsg[id];
     var msg = m ? '<p class="reason">' + (m.ok ? '✅ ' : '❌ ') + esc(m.text) + '</p>' : '';
     return '<div class="slot"><div class="slot-top"><span class="slot-q">' + title + '</span><span class="goal">' + range + '</span></div>' +
-      '<div>' + pillFor(st, chk, win) + '</div>' + action + msg + '</div>';
+      '<div>' + pillFor(st, chk, win, (date === START_DATE && kind === 'wake') ? (isToday ? '🚦 Tracking aaj raat ke good night se shuru hogi' : '🚦 Tracking is din ke good night se shuru hui') : '') + '</div>' + action + msg + '</div>';
   }
 
   function pinHTML(w) {
@@ -729,6 +772,7 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
 
   async function boot() {
     buildTitle();
+    initTestPanel();
     var doy = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 864e5);
     $('#sweet').textContent = SWEET[doy % SWEET.length];
     render(); tick();
