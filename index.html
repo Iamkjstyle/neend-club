@@ -225,6 +225,23 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+.pill { display: inline-block; border-radius: 999px; padding: 2px 12px; font-weight: 800; font-size: .82rem; font-variant-numeric: tabular-nums; border: 2px solid var(--line); background: var(--card); }
+.pill.pass { background: var(--mint-soft); border-color: var(--mint); }
+.pill.late { background: var(--late-soft); border-color: var(--late); }
+.pill.open { background: var(--sun-soft); border-color: var(--sun); }
+.pill.pending, .pill.skip { color: var(--muted); }
+.proof { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; font-family: var(--display); font-weight: 800; font-size: 1.05rem; padding: 10px 14px; border-radius: 999px; border: 0; background: var(--accent, var(--pink)); color: var(--on-solid); box-shadow: 0 4px 0 rgba(0, 0, 0, .2); cursor: pointer; transition: translate .12s, box-shadow .12s; text-align: center; }
+.proof:hover:not(:disabled) { translate: 0 -2px; }
+.proof:active:not(:disabled) { translate: 0 3px; box-shadow: 0 1px 0 rgba(0, 0, 0, .2); }
+.proof:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; background: var(--line); color: var(--ink); }
+.proof input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.proof:focus-within { outline: 3px solid var(--focus); outline-offset: 3px; }
+.reason { margin: 0; font-weight: 700; font-size: .9rem; text-wrap: balance; overflow-wrap: anywhere; }
+.pinrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pinrow input { flex: 1; min-width: 7ch; max-width: 14ch; font: inherit; font-weight: 700; padding: 6px 12px; border-radius: 999px; border: 2px solid var(--line); background: var(--panel); color: var(--ink); }
+.linkbtn { font-weight: 800; font-size: .85rem; border: 0; background: none; text-decoration: underline; text-underline-offset: 3px; padding: 4px 6px; }
+.linkbtn.solid { text-decoration: none; background: var(--accent); color: var(--on-solid); border-radius: 999px; padding: 6px 14px; }
 </style>
 </head>
 <body>
@@ -262,10 +279,10 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
     </div>
     <p class="sweet" id="sweet"></p>
     <div class="rules">
-      <span class="rule">🌙 Dono: 11:30 PM tak so jao</span>
-      <span class="rule">⏰ Kaju: 6:30 AM</span>
-      <span class="rule">⏰ Aj: 7:30 AM</span>
-      <span class="rule">🙈 1 late = 1 packet chips 🥔</span>
+      <span class="rule">🌙 Good night screenshot: 9:00 – 11:50 PM</span>
+      <span class="rule">⏰ Kaju good morning: 6:00 – 7:00 AM</span>
+      <span class="rule">⏰ Aj good morning: 7:00 – 8:00 AM</span>
+      <span class="rule">🙈 Window miss = Late = 1 packet chips 🥔</span>
     </div>
   </header>
 
@@ -281,7 +298,7 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
   <section class="panel" aria-labelledby="week-h">
     <h2 id="week-h">Is hafte ka report 📅</h2>
     <div class="scroll" id="week"></div>
-    <p class="tiny">Kisi din par tap karo, wahi din upar khul jayega. 🙈 = late, ✅ = time par, · = abhi tick nahi hua.</p>
+    <p class="tiny">Kisi din par tap karo, wahi din upar khul jayega. ✅ = pass, 🙈 = late, 📸 = window khula hai, ⏳ = abhi band, – = tracking shuru nahi hui.</p>
   </section>
 
   <section class="panel" aria-labelledby="ledger-h">
@@ -289,7 +306,7 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
     <div id="ledger"></div>
   </section>
 
-  <footer>Kaju ne Aj ke liye banaya 💖 Ab time par soyo, Pisitii! 🌙</footer>
+  <footer>Kaju ne Aj ke liye banaya 💖 Screenshot time par, chips safe! 🌙</footer>
 </main>
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -297,12 +314,11 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
 (function () {
   'use strict';
 
-  var PEOPLE = {
-    a: { key: 'a', name: 'Aj', full: 'Aastha Jaiswal', alias: 'Pisitii', avatar: '🐰', badge: '🎀', accent: '--pink', soft: '--pink-soft', wake: '7:30 AM' },
-    k: { key: 'k', name: 'Kaju', full: 'Kishan Jaiswal', alias: 'KJ', avatar: '🐻', badge: '🥜', accent: '--grape', soft: '--grape-soft', wake: '6:30 AM' }
-  };
-  var ORDER = ['a', 'k'];
-  var LS_KEY = 'aj-kaju-neend-club-v1';
+  /* ===== SETTINGS: edit these two lines ===== */
+  var WORKER_URL = 'PASTE_WORKER_URL_HERE';      // e.g. https://neend-club.yourname.workers.dev
+  var START_DATE = '2026-10-12';                  // tracking starts with this day's good-night slot
+  /* ========================================== */
+
   var FIREBASE_CONFIG = {
     apiKey: "AIzaSyA2SQhev4koBlT8-tHLx7LwLMXvSTCYGOc",
     authDomain: "analytics-band.firebaseapp.com",
@@ -311,143 +327,114 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
     messagingSenderId: "307582345351",
     appId: "1:307582345351:web:61af6c20994452ac74d822"
   };
+
+  var PEOPLE = {
+    a: { key: 'a', name: 'Aj', full: 'Aastha Jaiswal', alias: 'Pisitii', avatar: '🐰', badge: '🎀', accent: '--pink', soft: '--pink-soft' },
+    k: { key: 'k', name: 'Kaju', full: 'Kishan Jaiswal', alias: 'KJ', avatar: '🐻', badge: '🥜', accent: '--grape', soft: '--grape-soft' }
+  };
+  var ORDER = ['a', 'k'];
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  var days = {};      // "YYYY-MM-DD_who" -> {date, who, sleep, wake}
-  var settles = [];   // [{id, who, count, date, at}]
-  var fb = null;
-  var failed = false;
+  // ==== LOGIC START
+  var IST_OFFSET_MS = 330 * 60000;
+  // minutes since midnight IST, [first minute, last minute], both inclusive (same table as worker.js)
+  var WINDOWS = {
+    sleep: { a: [1260, 1430], k: [1260, 1430] },
+    wake: { a: [420, 480], k: [360, 420] }
+  };
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function istParts(ms) {
+    var d = new Date(ms + IST_OFFSET_MS);
+    return { date: d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()), mins: d.getUTCHours() * 60 + d.getUTCMinutes(), secs: d.getUTCSeconds() };
+  }
+  function addDaysStr(s, n) {
+    var p = s.split('-').map(Number);
+    var d = new Date(Date.UTC(p[0], p[1] - 1, p[2] + n));
+    return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate());
+  }
+  function dayBaseMs(s) { var p = s.split('-').map(Number); return Date.UTC(p[0], p[1] - 1, p[2]) - IST_OFFSET_MS; }
+  function fmt12(mins) { var h = Math.floor(mins / 60), m = mins % 60; return (h % 12 || 12) + ':' + pad(m) + ' ' + (h < 12 ? 'AM' : 'PM'); }
+  function counted(date, kind) { return date > START_DATE || (date === START_DATE && kind === 'sleep'); }
+  // pass | late | open | pending | skip
+  function slotStatus(date, who, kind, nowMs, hasCheck) {
+    if (!counted(date, kind)) return 'skip';
+    if (hasCheck) return 'pass';
+    var w = WINDOWS[kind][who], base = dayBaseMs(date);
+    if (nowMs < base + w[0] * 60000) return 'pending';
+    if (nowMs < base + (w[1] + 1) * 60000) return 'open';
+    return 'late';
+  }
+  function dateRange(from, to) {
+    var out = [], d = from, guard = 0;
+    while (d <= to && guard++ < 4000) { out.push(d); d = addDaysStr(d, 1); }
+    return out;
+  }
+  function has(checks, d, who, kind) { return !!checks[d + '_' + who + '_' + kind]; }
+  function tally(who, nowMs, checks) {
+    var late = 0, pass = 0;
+    dateRange(START_DATE, istParts(nowMs).date).forEach(function (d) {
+      ['sleep', 'wake'].forEach(function (k) {
+        var s = slotStatus(d, who, k, nowMs, has(checks, d, who, k));
+        if (s === 'late') late++; else if (s === 'pass') pass++;
+      });
+    });
+    return { late: late, pass: pass };
+  }
+  function dayPerfect(d, who, nowMs, checks) {
+    return slotStatus(d, who, 'sleep', nowMs, has(checks, d, who, 'sleep')) === 'pass' &&
+      slotStatus(d, who, 'wake', nowMs, has(checks, d, who, 'wake')) === 'pass';
+  }
+  function streak(who, nowMs, checks) {
+    var d = istParts(nowMs).date, n = 0;
+    if (!dayPerfect(d, who, nowMs, checks)) d = addDaysStr(d, -1);
+    while (d >= START_DATE && dayPerfect(d, who, nowMs, checks)) { n++; d = addDaysStr(d, -1); }
+    return n;
+  }
+  function owedOf(who, nowMs, checks, settles) {
+    var fed = 0;
+    settles.forEach(function (s) { if (s.who === who) fed += Number(s.count) || 0; });
+    return { late: tally(who, nowMs, checks).late, fed: fed, owed: Math.max(0, tally(who, nowMs, checks).late - fed) };
+  }
+  // ==== LOGIC END
+
+  var checks = {};
+  var settles = [];
   var syncState = 'connecting';
+  var fb = null;
   var confirmWho = null;
-  var viewDate = dateKey(new Date());
-  var queues = {};
+  var uploading = {};
+  var lastMsg = {};
+  var viewDate = istParts(Date.now()).date;
+  var pendingRender = false;
+  var lastMinute = -1;
+  var nowMs = Date.now();
 
   function $(s) { return document.querySelector(s); }
-  function pad(n) { return (n < 10 ? '0' : '') + n; }
-  function dateKey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
-  function parseKey(k) { var p = String(k).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
-  function addDays(k, n) { var d = parseKey(k); d.setDate(d.getDate() + n); return dateKey(d); }
-  function today() { return dateKey(new Date()); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function todayStr() { return istParts(Date.now()).date; }
+  function parseKey(k) { var p = k.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
   function nice(k) {
-    var t = today();
+    var t = todayStr();
     if (k === t) return 'Aaj';
-    if (k === addDays(t, -1)) return 'Kal';
+    if (k === addDaysStr(t, -1)) return 'Kal';
     return parseKey(k).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
   }
   function longDate(k) { return parseKey(k).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' }); }
+  function pinKey(w) { return 'neend-club-pin-' + w; }
+  function getPin(w) { try { return localStorage.getItem(pinKey(w)) || ''; } catch (e) { return ''; } }
+  function setPin(w, v) { try { if (v) localStorage.setItem(pinKey(w), v); else localStorage.removeItem(pinKey(w)); } catch (e) { /* storage blocked */ } }
 
-  /* ---------- numbers ---------- */
-  function lateOf(w) {
-    var n = 0;
-    Object.keys(days).forEach(function (k) {
-      var r = days[k];
-      if (r && r.who === w) n += (r.sleep === 'late' ? 1 : 0) + (r.wake === 'late' ? 1 : 0);
-    });
-    return n;
-  }
-  function fedOf(w) {
-    return settles.reduce(function (n, s) { return s.who === w ? n + (Number(s.count) || 0) : n; }, 0);
-  }
-  function owedOf(w) { return Math.max(0, lateOf(w) - fedOf(w)); }
-  function dayOk(date, w) { var r = days[date + '_' + w]; return !!(r && r.sleep === 'ok' && r.wake === 'ok'); }
-  function streak(w) {
-    var d = today(), n = 0;
-    if (!dayOk(d, w)) d = addDays(d, -1);
-    while (dayOk(d, w) && n < 4000) { n++; d = addDays(d, -1); }
-    return n;
-  }
-
-  /* ---------- storage ---------- */
-  function lsLoad() {
-    try {
-      var r = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
-      if (r) { days = r.days || {}; settles = r.settles || []; }
-    } catch (e) { /* storage blocked */ }
-  }
-  function lsSave() {
-    try { localStorage.setItem(LS_KEY, JSON.stringify({ days: days, settles: settles })); } catch (e) { /* storage blocked */ }
-  }
-  function enqueue(key, fn) {
-    queues[key] = (queues[key] || Promise.resolve()).catch(function () {}).then(fn);
-    return queues[key];
-  }
-  function saveFail() { toast('Save nahi hua 😢 Thodi der baad dobara try karo'); }
-
-  function saveDay(date, who, patch) {
-    var key = date + '_' + who;
-    var cur = days[key] || { date: date, who: who, sleep: null, wake: null };
-    var next = {};
-    Object.keys(cur).forEach(function (k) { next[k] = cur[k]; });
-    Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
-    days[key] = next;
-    if (fb) {
-      render();
-      enqueue(key, function () { return fb.setDay(key, next); }).catch(saveFail);
-    } else {
-      lsSave();
-      render();
-    }
-  }
-
-  function settle(w, btn) {
-    var owed = owedOf(w);
-    if (!owed) return;
-    burst(btn, ['🥔', '🎉', '💖', '⭐']);
-    var rec = { who: w, count: owed, date: today(), at: new Date().toISOString() };
-    confirmWho = null;
-    if (fb) {
-      var sid = fb.newId();
-      settles = [Object.assign({ id: sid }, rec)].concat(settles);
-      render();
-      enqueue('settle:' + sid, function () { return fb.setSettle(sid, rec); }).catch(saveFail);
-    } else {
-      settles = [Object.assign({ id: 'l' + Date.now() }, rec)].concat(settles);
-      lsSave();
-      render();
-    }
-    toast(PEOPLE[w].name + ' ne ' + owed + ' packet chips khila diye! Hisaab saaf 🎉🥔');
-  }
-
-  /* ---------- actions ---------- */
-  function mark(w, slot, val, btn) {
-    var cur = (days[viewDate + '_' + w] || {})[slot] || null;
-    var next = cur === val ? null : val;
-    if (next === 'ok') burst(btn, ['⭐', '💖', '🎈', '✨']);
-    if (next === 'late') toast(PEOPLE[w].name + ' ka +1 packet chips udhaar 🥔😜');
-    var patch = {}; patch[slot] = next;
-    saveDay(viewDate, w, patch);
-  }
-
-  document.addEventListener('click', function (e) {
-    var t = e.target.closest('[data-act]');
-    if (!t || t.disabled) return;
-    var act = t.getAttribute('data-act');
-    var w = t.getAttribute('data-who');
-    if (act === 'mark') mark(w, t.getAttribute('data-slot'), t.getAttribute('data-val'), t);
-    else if (act === 'settle') {
-      if (confirmWho === w) { settle(w, t); }
-      else {
-        confirmWho = w; render();
-        setTimeout(function () { if (confirmWho === w) { confirmWho = null; render(); } }, 4000);
-      }
-    }
-    else if (act === 'prev') { viewDate = addDays(viewDate, -1); render(); }
-    else if (act === 'next') { if (viewDate < today()) { viewDate = addDays(viewDate, 1); render(); } }
-    else if (act === 'today') { viewDate = today(); render(); }
-    else if (act === 'pick') { viewDate = t.getAttribute('data-date'); render(); window.scrollTo({ top: $('#daybar').offsetTop - 12, behavior: reduce ? 'auto' : 'smooth' }); }
-  });
-
-  /* ---------- fun ---------- */
+  /* ---------- toast + confetti ---------- */
   var toastTimer;
   function toast(m) {
     var el = $('#toast');
     el.textContent = m;
     el.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { el.classList.remove('show'); }, 2800);
+    toastTimer = setTimeout(function () { el.classList.remove('show'); }, 3200);
   }
   function burst(el, list) {
-    if (reduce || !el || !el.getBoundingClientRect) return;
+    if (reduce || !el || !el.getBoundingClientRect || !el.animate) return;
     var r = el.getBoundingClientRect();
     var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     for (var i = 0; i < 14; i++) {
@@ -471,59 +458,180 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
   var SWEET = [
     'Pisitii, jaldi so jao, kal phir masti karenge 🌙💤',
     'Kaju bhi time par uthega, promise 🥜⏰',
-    'Chips khilane se bachna hai to time par so jao 😜🥔',
+    'Chips khilane se bachna hai to time par screenshot daalo 😜🥔',
     'Aj + Kaju = sabse best neend squad 🐰🐻',
-    'Subah ki dhoop, chai aur on-time tick ☀️✅',
+    'Subah ki dhoop, chai aur on-time good morning ☀️💌',
     'Sapno me bhi hum saath 🌈✨',
     'Aaj bhi perfect din banayenge, hai na? 💖'
   ];
 
+  /* ---------- upload ---------- */
+  function compress(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        var max = 1800, w = img.naturalWidth, h = img.naturalHeight, sc = Math.min(1, max / Math.max(w, h));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w * sc)); c.height = Math.max(1, Math.round(h * sc));
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        var data = c.toDataURL('image/jpeg', 0.78);
+        resolve(data.slice(data.indexOf(',') + 1));
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('image')); };
+      img.src = url;
+    });
+  }
+
+  function setMsg(id, ok, text) { lastMsg[id] = { ok: ok, text: text }; }
+
+  async function upload(who, kind, file, btn) {
+    var id = todayStr() + '_' + who + '_' + kind;
+    if (!file) return;
+    if (WORKER_URL.indexOf('http') !== 0) { setMsg(id, false, 'Worker ka link page me set nahi hai (WORKER_URL).'); render(); return; }
+    var pin = getPin(who);
+    if (!pin) { setMsg(id, false, 'Pehle apna PIN daalo aur Save dabao.'); render(); return; }
+    uploading[id] = true; delete lastMsg[id]; render();
+    try {
+      var b64 = await compress(file);
+      var res = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ who: who, kind: kind, pin: pin, image: b64, mime: 'image/jpeg' })
+      });
+      var j = await res.json();
+      if (j && j.ok) {
+        if (j.id && !checks[j.id]) checks[j.id] = { who: who, kind: kind, date: j.date, msgTime: j.time || '' };
+        setMsg(id, true, j.message || 'Pass!');
+        toast(PEOPLE[who].name + ' ka ' + (kind === 'sleep' ? 'good night' : 'good morning') + ' pass! 🎉');
+      } else {
+        if (j && j.code === 'bad_pin') { setPin(who, ''); }
+        setMsg(id, false, ((j && j.message) || 'Check fail ho gaya.') + (j && j.seen ? ' [AI ne padha: ' + j.seen + ']' : ''));
+      }
+    } catch (e) {
+      setMsg(id, false, 'Server tak nahi pahunch paaya. Internet check karke dobara try karo.');
+    }
+    delete uploading[id];
+    render();
+    if (lastMsg[id] && lastMsg[id].ok) burst($('#cards'), ['⭐', '💖', '🎈', '✨']);
+  }
+
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t && t.matches && t.matches('input[type="file"][data-who]')) {
+      var f = t.files && t.files[0];
+      var who = t.getAttribute('data-who'), kind = t.getAttribute('data-kind');
+      t.value = '';
+      upload(who, kind, f, t);
+    }
+  });
+
+  /* ---------- chips settle ---------- */
+  function settle(w, btn) {
+    var o = owedOf(w, Date.now(), checks, settles).owed;
+    if (!o || !fb) return;
+    burst(btn, ['🥔', '🎉', '💖', '⭐']);
+    var rec = { who: w, count: o, date: todayStr(), at: new Date().toISOString() };
+    var sid = fb.newId();
+    settles = [Object.assign({ id: sid }, rec)].concat(settles);
+    confirmWho = null;
+    render();
+    fb.setSettle(sid, rec).catch(function () { toast('Save nahi hua 😢 Thodi der baad dobara try karo'); });
+    toast(PEOPLE[w].name + ' ne ' + o + ' packet chips khila diye! Hisaab saaf 🎉🥔');
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-act]');
+    if (!t || t.disabled) return;
+    var act = t.getAttribute('data-act');
+    var w = t.getAttribute('data-who');
+    if (act === 'settle') {
+      if (confirmWho === w) { settle(w, t); }
+      else {
+        confirmWho = w; render();
+        setTimeout(function () { if (confirmWho === w) { confirmWho = null; render(); } }, 4000);
+      }
+    }
+    else if (act === 'prev') { viewDate = addDaysStr(viewDate, -1); render(); }
+    else if (act === 'next') { if (viewDate < todayStr()) { viewDate = addDaysStr(viewDate, 1); render(); } }
+    else if (act === 'today') { viewDate = todayStr(); render(); }
+    else if (act === 'pick') { viewDate = t.getAttribute('data-date'); render(); window.scrollTo({ top: $('#daybar').offsetTop - 12, behavior: reduce ? 'auto' : 'smooth' }); }
+    else if (act === 'savepin') {
+      var inp = document.getElementById('pin-' + w);
+      var v = inp ? inp.value.trim() : '';
+      if (!v) { toast('PIN khaali hai'); return; }
+      setPin(w, v); render(); toast(PEOPLE[w].name + ' ka PIN is phone me save ho gaya 🔑');
+    }
+    else if (act === 'changepin') { setPin(w, ''); render(); }
+  });
+
   /* ---------- render ---------- */
-  function slotHTML(w, slot, icon, q, goal, val) {
-    return '<div class="slot"><div class="slot-top"><span aria-hidden="true">' + icon + '</span>' +
-      '<span class="slot-q">' + q + '</span><span class="goal">' + goal + '</span></div>' +
-      '<div class="pair">' +
-      '<button class="opt ok" data-act="mark" data-who="' + w + '" data-slot="' + slot + '" data-val="ok" aria-pressed="' + (val === 'ok') + '">Time par ✅</button>' +
-      '<button class="opt late" data-act="mark" data-who="' + w + '" data-slot="' + slot + '" data-val="late" aria-pressed="' + (val === 'late') + '">Late 🙈</button>' +
-      '</div></div>';
+  function pillFor(st, chk, win) {
+    if (st === 'pass') return '<span class="pill pass">✅ Pass' + (chk && chk.msgTime ? ' · ' + esc(fmt12(+chk.msgTime.split(':')[0] * 60 + +chk.msgTime.split(':')[1])) : '') + '</span>';
+    if (st === 'late') return '<span class="pill late">🙈 Late · +1 chips</span>';
+    if (st === 'open') return '<span class="pill open">📸 Window khula hai</span>';
+    if (st === 'pending') return '<span class="pill pending">⏳ Abhi band</span>';
+    return '<span class="pill skip">Tracking yahan se shuru nahi</span>';
+  }
+
+  function slotHTML(w, kind) {
+    var date = viewDate, win = WINDOWS[kind][w];
+    var id = date + '_' + w + '_' + kind, chk = checks[id];
+    var st = slotStatus(date, w, kind, nowMs, !!chk);
+    var isToday = date === todayStr();
+    var title = kind === 'sleep' ? '🌙 Good night screenshot' : '⏰ Good morning screenshot';
+    var range = fmt12(win[0]) + ' – ' + fmt12(win[1]);
+    var action = '';
+    if (uploading[id]) action = '<button class="proof" disabled>🔍 AI check kar raha hai…</button>';
+    else if (st === 'open' && isToday) action = '<label class="proof">📸 Screenshot daalo<input type="file" accept="image/*" data-who="' + w + '" data-kind="' + kind + '"></label>';
+    else if (st === 'pending' && isToday) action = '<button class="proof" disabled>⏳ ' + fmt12(win[0]) + ' se khulega</button>';
+    var m = lastMsg[id];
+    var msg = m ? '<p class="reason">' + (m.ok ? '✅ ' : '❌ ') + esc(m.text) + '</p>' : '';
+    return '<div class="slot"><div class="slot-top"><span class="slot-q">' + title + '</span><span class="goal">' + range + '</span></div>' +
+      '<div>' + pillFor(st, chk, win) + '</div>' + action + msg + '</div>';
+  }
+
+  function pinHTML(w) {
+    if (getPin(w)) return '<div class="pinrow"><span class="tiny">🔑 PIN is phone me saved hai</span><button class="linkbtn" data-act="changepin" data-who="' + w + '">badlo</button></div>';
+    return '<div class="pinrow"><label class="tiny" for="pin-' + w + '">🔑 ' + PEOPLE[w].name + ' ka PIN</label>' +
+      '<input id="pin-' + w + '" type="password" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="PIN">' +
+      '<button class="linkbtn solid" data-act="savepin" data-who="' + w + '">Save</button></div>';
   }
 
   function cardHTML(w) {
     var p = PEOPLE[w];
-    var rec = days[viewDate + '_' + w] || {};
-    var owed = owedOf(w), fed = fedOf(w), late = lateOf(w), st = streak(w);
+    var o = owedOf(w, nowMs, checks, settles);
+    var st = streak(w, nowMs, checks);
     var bags = '';
-    for (var i = 0; i < Math.min(owed, 10); i++) {
+    for (var i = 0; i < Math.min(o.owed, 10); i++) {
       bags += '<svg class="bag" style="--i:' + i + '" width="30" height="41" viewBox="0 0 38 52" aria-hidden="true"><use href="#bag"/></svg>';
     }
-    if (owed > 10) bags += '<span class="more">+' + (owed - 10) + '</span>';
-    if (!owed) bags = '<span class="safe">Koi udhaar nahi 😇✨</span>';
+    if (o.owed > 10) bags += '<span class="more">+' + (o.owed - 10) + '</span>';
+    if (!o.owed) bags = '<span class="safe">Koi udhaar nahi 😇✨</span>';
     var armed = confirmWho === w;
     return '<article class="card" style="--accent:var(' + p.accent + ');--accent-soft:var(' + p.soft + ')" aria-labelledby="n-' + w + '">' +
       '<div class="who"><div class="avatar" aria-hidden="true">' + p.avatar + '</div>' +
       '<div class="grow"><h2 id="n-' + w + '">' + p.name + ' ' + p.badge + '</h2><p class="sub">' + p.full + ' · ' + p.alias + '</p></div>' +
       '<div class="streak" title="Lagataar perfect din">🔥 ' + st + '</div></div>' +
-      slotHTML(w, 'sleep', '🌙', 'Kal raat 11:30 PM tak soye?', '11:30 PM', rec.sleep) +
-      slotHTML(w, 'wake', '⏰', 'Aaj subah ' + p.wake + ' tak uthe?', p.wake, rec.wake) +
+      slotHTML(w, 'sleep') + slotHTML(w, 'wake') + pinHTML(w) +
       '<div class="chips"><div class="chips-head"><h3>Chips udhaar 🥔</h3>' +
-      '<span class="owed"><b>' + owed + '</b> packet baaki</span></div>' +
+      '<span class="owed"><b>' + o.owed + '</b> packet baaki</span></div>' +
       '<div class="bags">' + bags + '</div>' +
-      '<button class="settle' + (armed ? ' armed' : '') + '" data-act="settle" data-who="' + w + '"' + (owed ? '' : ' disabled') + '>' +
+      '<button class="settle' + (armed ? ' armed' : '') + '" data-act="settle" data-who="' + w + '"' + (o.owed && fb ? '' : ' disabled') + '>' +
       (armed ? 'Pakka khila diye? Haan ✅' : 'Chips khila diye 🎉') + '</button>' +
-      '<p class="tiny">Ab tak khilaye: ' + fed + ' packet · Late hue: ' + late + ' baar</p></div>' +
+      '<p class="tiny">Ab tak khilaye: ' + o.fed + ' packet · Late hue: ' + o.late + ' baar</p></div>' +
       '</article>';
   }
 
-  function icon(v) { return v === 'ok' ? '✅' : v === 'late' ? '🙈' : '·'; }
+  function cellIcon(st) { return st === 'pass' ? '✅' : st === 'late' ? '🙈' : st === 'open' ? '📸' : st === 'pending' ? '⏳' : '–'; }
 
   function weekHTML() {
-    var rows = '';
+    var rows = '', t = todayStr();
     for (var i = 0; i < 7; i++) {
-      var d = addDays(today(), -i);
-      var cells = '';
+      var d = addDaysStr(t, -i), cells = '';
       ORDER.forEach(function (w) {
-        var r = days[d + '_' + w] || {};
-        cells += '<td>' + icon(r.sleep) + '</td><td>' + icon(r.wake) + '</td>';
+        ['sleep', 'wake'].forEach(function (k) { cells += '<td>' + cellIcon(slotStatus(d, w, k, nowMs, has(checks, d, w, k))) + '</td>'; });
       });
       rows += '<tr' + (d === viewDate ? ' class="sel"' : '') + '><td class="left"><button class="daylink" data-act="pick" data-date="' + d + '">' + nice(d) + '</button></td>' + cells + '</tr>';
     }
@@ -533,48 +641,73 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
 
   function ledgerHTML() {
     var tiles = '<div class="totals">' + ORDER.map(function (w) {
-      return '<div class="tile"><b>' + fedOf(w) + '</b><span>' + PEOPLE[w].avatar + ' ' + PEOPLE[w].name + ' ne khilaye (packet)</span></div>';
+      return '<div class="tile"><b>' + owedOf(w, nowMs, checks, settles).fed + '</b><span>' + PEOPLE[w].avatar + ' ' + PEOPLE[w].name + ' ne khilaye (packet)</span></div>';
     }).join('') + '</div>';
     var list = settles.filter(function (s) { return PEOPLE[s.who]; }).slice(0, 25);
     var body = list.length
       ? '<ul class="ledger">' + list.map(function (s) {
           return '<li><span>🥔 ' + PEOPLE[s.who].name + ' ne ' + (Number(s.count) || 0) + ' packet chips khilaye</span><time>' + nice(s.date) + '</time></li>';
         }).join('') + '</ul>'
-      : '<p class="empty">Abhi tak koi chips nahi khilaye 😇 Bahut badhiya! Aise hi time par soyo-uthho.</p>';
+      : '<p class="empty">Abhi tak koi chips nahi khilaye 😇 Bahut badhiya! Aise hi time par screenshot daalo.</p>';
     return tiles + body;
   }
 
   function render() {
-    var t = today();
-    var isToday = viewDate === t;
+    nowMs = Date.now();
+    var t = todayStr(), isToday = viewDate === t;
     $('#daybar').innerHTML =
-      '<button class="round" data-act="prev" aria-label="Pichla din">◀</button>' +
+      '<button class="round" data-act="prev" aria-label="Pichla din"' + (viewDate <= START_DATE ? ' disabled' : '') + '>◀</button>' +
       '<div class="label"><b>' + nice(viewDate) + '</b><small>' + longDate(viewDate) + '</small></div>' +
       '<button class="round" data-act="next" aria-label="Agla din"' + (viewDate >= t ? ' disabled' : '') + '>▶</button>' +
       (isToday ? '' : '<button class="todaybtn" data-act="today">Aaj par jao</button>');
-    var perfect = ORDER.every(function (w) { return dayOk(viewDate, w); });
-    $('#perfect').innerHTML = perfect ? '<div class="perfect">Perfect din! 🎉 Aj aur Kaju dono time par, chips safe 🥔✨</div>' : '';
+    var perfect = ORDER.every(function (w) { return dayPerfect(viewDate, w, nowMs, checks); });
+    $('#perfect').innerHTML = perfect ? '<div class="perfect">Perfect din! 🎉 Aj aur Kaju dono ke dono screenshot pass, chips safe 🥔✨</div>' : '';
     $('#cards').innerHTML = ORDER.map(cardHTML).join('');
     $('#week').innerHTML = weekHTML();
     $('#ledger').innerHTML = ledgerHTML();
     var chip = $('#sync');
     chip.textContent = syncState === 'shared' ? '☁️ Dono ka data sync ho raha hai'
       : syncState === 'denied' ? '⚠️ Sync band hai (Firestore Rules publish karo)'
-      : syncState === 'local' ? '📱 Sirf is device me save (sync off)' : '☁️ Connect ho raha hai…';
+      : syncState === 'error' ? '⚠️ Database se connect nahi ho paaya'
+      : '☁️ Connect ho raha hai…';
+  }
+
+  function scheduleRender() {
+    var a = document.activeElement;
+    if (a && a.tagName === 'INPUT' && a.type !== 'file' && $('#cards').contains(a)) { pendingRender = true; return; }
+    render();
+  }
+  document.addEventListener('focusout', function () {
+    if (pendingRender) setTimeout(function () { var a = document.activeElement; if (!(a && a.tagName === 'INPUT' && a.type !== 'file')) { pendingRender = false; render(); } }, 0);
+  });
+
+  function span(x) { var hh = Math.floor(x / 60), mm = x % 60; return (hh ? hh + ' ghanta ' : '') + mm + ' min'; }
+  function nudgeText(mins) {
+    var items = [
+      { n: 'Good night (Aj + Kaju)', w: WINDOWS.sleep.k },
+      { n: 'Kaju ka good morning', w: WINDOWS.wake.k },
+      { n: 'Aj ka good morning', w: WINDOWS.wake.a }
+    ];
+    var i;
+    for (i = 0; i < items.length; i++) {
+      if (mins >= items[i].w[0] && mins <= items[i].w[1]) return '📸 ' + items[i].n + ' ka window khula hai, ' + span(items[i].w[1] + 1 - mins) + ' baaki';
+    }
+    var next = null;
+    items.forEach(function (it) { if (it.w[0] > mins && (!next || it.w[0] < next.w[0])) next = it; });
+    if (next) return '⏳ Agla window: ' + next.n + ' ' + fmt12(next.w[0]) + ' se (' + span(next.w[0] - mins) + ' me)';
+    return '😴 Aaj ke saare window khatam. Kal subah milte hain!';
   }
 
   function tick() {
-    var n = new Date();
-    var h = n.getHours(), m = n.getMinutes();
-    var h12 = h % 12 || 12;
-    $('#clock').textContent = h12 + ':' + pad(m) + ':' + pad(n.getSeconds()) + ' ' + (h < 12 ? 'AM' : 'PM');
-    var mins = h * 60 + m, msg;
-    function span(x) { var hh = Math.floor(x / 60), mm = x % 60; return (hh ? hh + ' ghanta ' : '') + mm + ' min'; }
-    if (mins >= 1410 || mins < 360) msg = 'Neend ka time ho gaya 😴 Phone rakho aur so jao!';
-    else if (mins < 390) msg = 'Kaju ke uthne me ' + span(390 - mins) + ' ⏰🥜';
-    else if (mins < 450) msg = 'Kaju uth gaya? ✅ Ab Aj ke uthne me ' + span(450 - mins) + ' ☀️🐰';
-    else msg = 'Sone me ' + span(1410 - mins) + ' baaki 🌙';
-    $('#nudge').textContent = msg;
+    var p = istParts(Date.now());
+    var h = Math.floor(p.mins / 60), m = p.mins % 60;
+    $('#clock').textContent = (h % 12 || 12) + ':' + pad(m) + ':' + pad(p.secs) + ' ' + (h < 12 ? 'AM' : 'PM') + ' IST';
+    $('#nudge').textContent = nudgeText(p.mins);
+    if (p.mins !== lastMinute) {
+      var first = lastMinute === -1;
+      lastMinute = p.mins;
+      if (!first) scheduleRender();
+    }
   }
 
   /* ---------- boot ---------- */
@@ -589,12 +722,9 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
     $('#title').innerHTML = out;
   }
 
-  function fallbackLocal(err) {
-    failed = true; fb = null;
-    syncState = (err && err.code === 'permission-denied') ? 'denied' : 'local';
-    days = {}; settles = [];
-    lsLoad(); render();
-    if (syncState === 'denied') toast('Sync band hai: Firestore me Rules publish karo');
+  function onErr(err) {
+    syncState = (err && err.code === 'permission-denied') ? 'denied' : 'error';
+    render();
   }
 
   async function boot() {
@@ -610,28 +740,24 @@ footer { text-align: center; font-weight: 800; color: var(--muted); padding-bloc
       var app = appMod.initializeApp(FIREBASE_CONFIG);
       var fs = fsMod.getFirestore(app);
       fb = {
-        setDay: function (key, data) { return fsMod.setDoc(fsMod.doc(fs, 'days', key), data); },
         newId: function () { return fsMod.doc(fsMod.collection(fs, 'settlements')).id; },
         setSettle: function (id, rec) { return fsMod.setDoc(fsMod.doc(fs, 'settlements', id), rec); }
       };
       syncState = 'shared'; render();
-      fsMod.onSnapshot(fsMod.collection(fs, 'days'), function (snap) {
-        if (failed) return;
-        days = {};
-        snap.forEach(function (d) { days[d.id] = d.data(); });
-        render();
-      }, fallbackLocal);
+      fsMod.onSnapshot(fsMod.collection(fs, 'checks'), function (snap) {
+        checks = {};
+        snap.forEach(function (d) { checks[d.id] = d.data(); });
+        scheduleRender();
+      }, onErr);
       fsMod.onSnapshot(fsMod.query(fsMod.collection(fs, 'settlements'), fsMod.orderBy('at', 'desc'), fsMod.limit(500)), function (snap) {
-        if (failed) return;
         settles = [];
         snap.forEach(function (d) { settles.push(Object.assign({ id: d.id }, d.data())); });
-        render();
-      }, fallbackLocal);
-    } catch (e) { fallbackLocal(e); }
+        scheduleRender();
+      }, onErr);
+    } catch (e) { onErr(e); }
   }
   boot();
 })();
 </script>
-
 </body>
 </html>
